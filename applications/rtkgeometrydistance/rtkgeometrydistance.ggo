@@ -1,0 +1,9 @@
+package "rtkgeometrydistance"
+purpose "Computes the distance between two geometries"
+
+option "verbose"    v "Verbose execution"                      flag     off
+option "config"     - "Config file"                            string   no
+option "geometry1"  -  "XML geometry file name 1"              string   yes
+option "geometry2"  -  "XML geometry file name 2"              string   yes
+option "output"     o "Output projections file name"           string   yes
+
