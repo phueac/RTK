@@ -127,30 +127,35 @@ GeometryDistanceImageFilter<TInputImage,TOutputImage>
     // Get source and direction of each ray
     RQIFunctionType::VectorType src[2];
     RQIFunctionType::VectorType dir[2];
-    RQIFunctionType::VectorType xnear[2];
-    RQIFunctionType::VectorType xfar[2];
 
-    // Compute intersections with FOV
+    // Get ray information
     for(int i=0; i<2; i++)
       {
       src[i] = itIn[i]->GetSourcePosition();
-      rqi[i]->SetRayOrigin( src[i] );
       dir[i] = itIn[i]->GetDirection();
-      assert( rqi[i]->Evaluate(dir[i]) );
-      xnear[i] = src[i]+dir[i]*rqi[i]->GetNearestDistance();
-      xfar[i]  = src[i]+dir[i]*rqi[i]->GetFarthestDistance();
       }
 
     typename TOutputImage::PixelType pixval = -1.;
     for(int i=0; i<2; i++)
       {
+      // Compute intersections with FOV
+      rqi[i]->SetRayOrigin( src[i] );
+      if( !rqi[i]->Evaluate(dir[i]) )
+        {
+        continue;
+        }
+      RQIFunctionType::VectorType xnear, xfar;
+      xnear = src[i]+dir[i]*rqi[i]->GetNearestDistance();
+      xfar  = src[i]+dir[i]*rqi[i]->GetFarthestDistance();
+
       // Project onto other ray
       RQIFunctionType::VectorType xnearproj, xfarproj;
-      xnearproj = (xnear[i]-src[(i+1)%2])*dir[(i+1)%2]*dir[(i+1)%2]+src[(i+1)%2];
-      xfarproj  = (xfar[i] -src[(i+1)%2])*dir[(i+1)%2]*dir[(i+1)%2]+src[(i+1)%2];
+      xnearproj = (xnear-src[(i+1)%2])*dir[(i+1)%2]*dir[(i+1)%2]+src[(i+1)%2];
+      xfarproj  = (xfar -src[(i+1)%2])*dir[(i+1)%2]*dir[(i+1)%2]+src[(i+1)%2];
+
       // Take max of the difference norm
-      xnearproj -= xnear[i];
-      xfarproj -= xfar[i];
+      xnearproj -= xnear;
+      xfarproj -= xfar;
       pixval = std::max(pixval, (typename TOutputImage::PixelType)xnearproj.GetNorm() );
       pixval = std::max(pixval, (typename TOutputImage::PixelType)xfarproj.GetNorm() );
       }
